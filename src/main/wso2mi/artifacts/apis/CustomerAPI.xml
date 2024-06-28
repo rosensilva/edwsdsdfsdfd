@@ -1,0 +1,33 @@
+<api xmlns="http://ws.apache.org/ns/synapse" name="CustomerAPI" context="/customer">
+    <resource methods="GET" uri-template="/{account_id}">
+        <inSequence>
+            <property name="account_id" expression="get-property('uri.var.account_id')" scope="default" type="STRING"/>
+            <dblookup>
+                <connection>
+                    <pool>
+                        <driver>com.mysql.jdbc.Driver</driver>
+                        <url>jdbc:mysql://localhost:3306/customerDB</url>
+                        <user>username</user>
+                        <password>password</password>
+                    </pool>
+                </connection>
+                <statement>
+                    <sql>SELECT first_name, last_name, kyc_status FROM customers WHERE account_id = ?</sql>
+                    <parameter expression="get-property('account_id')" type="VARCHAR"/>
+                    <result name="first_name" column="first_name"/>
+                    <result name="last_name" column="last_name"/>
+                    <result name="kyc_status" column="kyc_status"/>
+                </statement>
+            </dblookup>
+            <payloadFactory media-type="json">
+                <format>{"first_name": "$1", "last_name": "$2", "kyc_status": "$3"}</format>
+                <args>
+                    <arg evaluator="xml" expression="get-property('first_name')"/>
+                    <arg evaluator="xml" expression="get-property('last_name')"/>
+                    <arg evaluator="xml" expression="get-property('kyc_status')"/>
+                </args>
+            </payloadFactory>
+            <respond/>
+        </inSequence>
+    </resource>
+</api>
